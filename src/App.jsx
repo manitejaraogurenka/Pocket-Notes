@@ -1,35 +1,76 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from "react";
+import Sidebar from "./components/Sidebar";
+import NoteArea from "./components/NoteArea";
+import { useSelector } from "react-redux";
+import { MdLock } from "react-icons/md";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [isSmallScreen, setIsSmallScreen] = useState(
+    typeof window !== "undefined" && window.innerWidth <= 640
+  );
+
+  const { isdark } = useSelector((state) => state.lightDark);
+  const { selectedGroup } = useSelector((state) => state.group);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth <= 640);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div
+      className={`${!isdark ? "bg-[#DAE5F5]" : "bg-[#3c3c3c]"} 
+        `}
+    >
+      <div
+        className={`flex w-screen overflow-hidden h-screen ${
+          isdark ? "text-white" : ""
+        }`}
+      >
+        {isSmallScreen ? (
+          selectedGroup ? (
+            <NoteArea />
+          ) : (
+            <Sidebar />
+          )
+        ) : (
+          <>
+            <Sidebar />
+            <div className="h-screen w-full relative">
+              {!selectedGroup && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <img
+                    src="/landing.png"
+                    alt="Pocket Notes"
+                    className="w-full h-auto"
+                  />
+                  <div className="mt-4">
+                    <h1 className="text-2xl font-bold">Pocket Notes</h1>
+                    <p className="mt-2 text-base">
+                      Send and receive messages without keeping your phone
+                      online.
+                      <br />
+                      Use Pocket Notes on up to 4 linked devices and 1 mobile
+                      phone
+                    </p>
+                    <p className="mt-6 text-sm flex items-center justify-center gap-2">
+                      <MdLock className=" mt-1" />
+                      end-to-end encrypted
+                    </p>
+                  </div>
+                </div>
+              )}
+              {selectedGroup && <NoteArea />}
+            </div>
+          </>
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    </div>
+  );
+};
 
-export default App
+export default App;
