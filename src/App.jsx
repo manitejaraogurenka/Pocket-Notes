@@ -42,11 +42,12 @@ const App = () => {
             <Sidebar />
             <div className="h-screen w-full relative">
               {!selectedGroup && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
                   <img
+                    draggable={false}
                     src="/landing.png"
                     alt="Pocket Notes"
-                    className="w-full h-auto"
+                    className="w-full lg:w-[80%] h-auto"
                   />
                   <div className="mt-4">
                     <h1 className="text-2xl font-bold">Pocket Notes</h1>

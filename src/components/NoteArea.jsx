@@ -16,6 +16,9 @@ import { CustomAvatar2 } from "./miscellaneous/Avatar";
 import { GoDotFill } from "react-icons/go";
 import { styled } from "@mui/system";
 import { AiOutlineDelete } from "react-icons/ai";
+import { IoMdSearch } from "react-icons/io";
+import { IoMdShareAlt } from "react-icons/io";
+import ShareModal from "./miscellaneous/ShareModal";
 
 const StyledTextField = styled(TextField)(({ theme, isdark }) => ({
   color: isdark ? "white" : "black",
@@ -43,6 +46,26 @@ const NoteArea = () => {
     typeof window !== "undefined" && window.innerWidth <= 640
   );
   const [inputValue, setInputValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [noteToShare, setNoteToShare] = useState("");
+
+  const handleOpenShareModal = (noteContent) => {
+    setNoteToShare(noteContent);
+    setIsShareModalOpen(true);
+  };
+
+  const handleCloseShareModal = () => {
+    setIsShareModalOpen(false);
+    setNoteToShare("");
+  };
+
+  const noteRefs = useRef({});
+
+  const setNoteRef = (id, element) => {
+    noteRefs.current[id] = element;
+  };
 
   const linkifyDecorator = (href, text, key) => (
     <a
@@ -102,16 +125,35 @@ const NoteArea = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (noteEndRef.current) {
+      if ((noteEndRef.current, !searchQuery)) {
         noteEndRef.current.scrollIntoView({ behavior: "auto" });
       }
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [localNotes]);
+  }, [localNotes, searchQuery]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      const foundNote = localNotes.find((note) =>
+        note.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      if (foundNote && noteRefs.current[foundNote._id]) {
+        noteRefs.current[foundNote._id].scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }
+  }, [searchQuery, localNotes]);
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
   };
 
   const postNote = async () => {
@@ -157,13 +199,33 @@ const NoteArea = () => {
     );
   };
 
+  const highlightText = (text, highlight) => {
+    if (!highlight.trim()) return text;
+
+    const parts = text.split(new RegExp(`(${highlight})`, "gi"));
+    return parts.map((part, index) =>
+      part.toLowerCase() === highlight.toLowerCase() ? (
+        <span key={index} style={{ backgroundColor: "yellow" }}>
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   const formatNoteContent = (content) => {
-    return content.split("\n").map((line, index) => (
-      <React.Fragment key={index}>
-        {line}
-        <br />
-      </React.Fragment>
-    ));
+    const lines = content.split("\n");
+    return (
+      <>
+        {lines.map((line, index) => (
+          <React.Fragment key={index}>
+            {highlightText(line, searchQuery)}
+            <br />
+          </React.Fragment>
+        ))}
+      </>
+    );
   };
 
   const handleEditClick = (noteId, currentContent) => {
@@ -229,34 +291,55 @@ const NoteArea = () => {
       } overflow-hidden  w-full`}
     >
       <div
-        className={` py-2 px-5 w-full z-20 flex fixed items-center justify-between ${
+        className={` py-2 px-5 w-full z-20 flex sticky top-0 items-center justify-between ${
           isdark ? "bg-[#212121]" : "bg-[#001F8B] text-white"
         } shadow-sm `}
       >
-        <div className={`flex gap-4 items-center`}>
+        <div className={`flex items-center justify-between`}>
           {isSmallScreen && (
             <span onClick={() => dispatch(groupActions.setSelectedGroup(""))}>
               <ArrowBackIcon
                 style={{
                   fontSize: "26px",
-                  color: isdark ? "white" : "rgba(0, 0, 0, 0.5)",
+                  color: "white",
                 }}
-                className={` ${
-                  isdark ? "hover:bg-slate-800" : "hover:bg-slate-100"
-                } rounded-full sm:ml-2`}
+                className={`rounded-full mr-4 cursor-pointer`}
               />
             </span>
           )}
-          <CustomAvatar2 name={selectedName} color={selectedColor} />
-          <span className="text-2xl font-sans select-none">{selectedName}</span>
+          <div className="flex gap-4 items-center">
+            <CustomAvatar2 name={selectedName} color={selectedColor} />
+            <span className="text-2xl font-sans select-none">
+              {selectedName}
+            </span>
+          </div>
+        </div>
+        <div className=" hidden lg:block">
+          <TextField
+            placeholder="Search notes..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            variant="outlined"
+            size="small"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IoMdSearch size={20} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              backgroundColor: isdark ? "#333" : "#fff",
+              borderRadius: "4px",
+            }}
+          />
         </div>
       </div>
-
       <div
         ref={noteContainerRef}
         className="overflow-scroll w-full h-[80vh] px-4 pt-14 relative"
       >
-        <div className="mt-12">
+        <div className="mt-8">
           {loading && (
             <div className="flex items-center justify-center h-full mt-5 w-full">
               <CircularProgress />
@@ -269,11 +352,12 @@ const NoteArea = () => {
               <div
                 key={note._id}
                 className={`flex-1 w-full mb-4 ${"justify-start"} h-auto relative`}
+                ref={(el) => setNoteRef(note._id, el)}
               >
                 <div
                   className={`${isdark ? "bg-[#3c3c3c]" : "bg-white"} text-${
                     isdark ? "white" : "black"
-                  } p-2 pb-10 rounded-[4px] Shadow`}
+                  } p-2 pb-10 rounded-[4px] shadow`}
                 >
                   {editableNoteId === note._id ? (
                     <>
@@ -340,6 +424,12 @@ const NoteArea = () => {
                           isdark ? "text-gray-300" : "text-[#353535]"
                         }  absolute bottom-2 right-2 select-none`}
                       >
+                        <IoMdShareAlt
+                          onClick={() => handleOpenShareModal(note.content)}
+                          size={16}
+                          className=" cursor-pointer"
+                        />
+
                         <MdEdit
                           onClick={() =>
                             handleEditClick(note._id, note.content)
@@ -426,6 +516,11 @@ const NoteArea = () => {
           </IconButton>
         </InputAdornment>
       </div>
+      <ShareModal
+        open={isShareModalOpen}
+        onClose={handleCloseShareModal}
+        noteContent={noteToShare}
+      />
     </div>
   );
 };

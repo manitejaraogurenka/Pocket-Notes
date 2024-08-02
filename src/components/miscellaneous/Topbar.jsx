@@ -27,33 +27,51 @@ const Topbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [placeholderAnimated, setPlaceholderAnimated] = useState(false);
+  const abortControllerRef = useRef(null);
   const { isdark } = useSelector((state) => state.lightDark);
 
   const fetchSearchResults = useCallback(
     debounce(async (query) => {
+      if (!query.trim()) {
+        dispatch(groupActions.setSearchResult([]));
+        return;
+      }
+
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
       try {
         const response = await fetch(
           `https://pocketnotesappapi.vercel.app/api/groups/search?query=${encodeURIComponent(
             query
-          )}`
+          )}`,
+          { signal: abortController.signal }
         );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         console.log(data.data);
         dispatch(groupActions.setSearchResult(data.data));
       } catch (error) {
-        console.error("Failed to fetch search results", error);
+        if (error.name === "AbortError") {
+          console.log("Request aborted");
+        } else {
+          console.error("Failed to fetch search results", error);
+        }
       }
     }, 300),
     [dispatch]
   );
 
   useEffect(() => {
-    if (inputValue) {
-      fetchSearchResults(inputValue);
-    } else {
-      dispatch(groupActions.setSearchResult([]));
-    }
-  }, [inputValue, fetchSearchResults, dispatch]);
+    fetchSearchResults(inputValue);
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [inputValue, fetchSearchResults]);
 
   const handleArrowBackClick = () => {
     setInputValue("");
@@ -100,10 +118,10 @@ const Topbar = () => {
         isdark ? "bg-[#212121]" : "bg-white"
       }`}
     >
-      <div className=" flex items-center justify-center p-2 text-2xl font-bold">
+      <div className="flex items-center justify-center p-2 text-2xl font-bold">
         Pocket Notes
       </div>
-      <div className=" flex w-full">
+      <div className="flex w-full">
         <RotatingIconContainer
           onClick={isFocused ? handleArrowBackClick : handleMenuClick}
           style={{
@@ -159,7 +177,7 @@ const Topbar = () => {
             className={`outline-none text-sm w-full mr-1.5 pr-1 topbar-search-input ${
               placeholderAnimated ? "placeholder-animated" : ""
             } ${isdark ? "dark-mode" : ""}`}
-            placeholder="Search"
+            placeholder="Search groups"
             value={inputValue}
             onChange={handleInputChange}
             onAnimationEnd={() => setPlaceholderAnimated(false)}
@@ -174,7 +192,7 @@ const Topbar = () => {
             <CloseIcon
               fontSize="medium"
               style={{ color: "#3390ec", cursor: "pointer" }}
-              className=" hover:bg-blue-100 p-0.5 rounded-full"
+              className="hover:bg-blue-100 p-0.5 rounded-full"
               onClick={handleClearInput}
             />
           )}

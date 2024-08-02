@@ -221,15 +221,10 @@ const Sidebar = () => {
             )
           ) : (
             <>
-              {groupsToRender.length > 0 ? (
+              {groupsToRender.length > 0 &&
                 groupsToRender.map((group, index) =>
                   renderGroupItem(group, index)
-                )
-              ) : (
-                <li className="flex items-center justify-center p-4">
-                  <span className="text-gray-500">No Groups yet</span>
-                </li>
-              )}
+                )}
               {hasMore && !loading && (
                 <div ref={loader} className="h-10">
                   {renderGroupItemSkeleton(0)}
