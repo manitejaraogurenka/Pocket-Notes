@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const lightDarkSlice = createSlice({
   name: "lightDark",
-  initialState: { isdark: true },
+  initialState: { isdark: false },
   reducers: {
     setDark(state) {
       state.isdark = !state.isdark;
