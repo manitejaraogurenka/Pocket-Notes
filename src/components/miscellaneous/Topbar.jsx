@@ -33,7 +33,7 @@ const Topbar = () => {
     debounce(async (query) => {
       try {
         const response = await fetch(
-          `http://localhost:8080/api/groups/search?query=${encodeURIComponent(
+          `https://pocketnotesappapi.vercel.app/api/groups/search?query=${encodeURIComponent(
             query
           )}`
         );

@@ -82,7 +82,7 @@ const NoteArea = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:8080/api/groups/${groupId}/notes`
+          `https://pocketnotesappapi.vercel.app/api/groups/${groupId}/notes`
         );
 
         dispatch(groupActions.setNotesForSelectedGroup(response.data));
@@ -120,10 +120,13 @@ const NoteArea = () => {
     setLoading(true);
     try {
       const groupId = selectedGroup.split("-")[0];
-      const response = await axios.post(`http://localhost:8080/api/notes`, {
-        groupId,
-        content: inputValue,
-      });
+      const response = await axios.post(
+        `https://pocketnotesappapi.vercel.app/api/notes`,
+        {
+          groupId,
+          content: inputValue,
+        }
+      );
 
       const newNote = response.data;
       dispatch(groupActions.addNoteToSelectedGroup(newNote));
@@ -178,7 +181,7 @@ const NoteArea = () => {
     setLoading(true);
     try {
       const response = await axios.put(
-        `http://localhost:8080/api/notes/${editableNoteId}`,
+        `https://pocketnotesappapi.vercel.app/api/notes/${editableNoteId}`,
         {
           content: editContent,
         }
@@ -204,7 +207,9 @@ const NoteArea = () => {
   const deleteNote = async (noteId) => {
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:8080/api/notes/${noteId}`);
+      await axios.delete(
+        `https://pocketnotesappapi.vercel.app/api/notes/${noteId}`
+      );
       dispatch(groupActions.removeNoteFromSelectedGroup(noteId));
       setLocalNotes((prevNotes) =>
         prevNotes.filter((note) => note._id !== noteId)

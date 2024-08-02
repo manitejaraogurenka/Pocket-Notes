@@ -36,7 +36,7 @@ const Sidebar = () => {
   const loader = useRef(null);
 
   const { loading, error, data } = useDataFetch(
-    `http://localhost:8080/api/groups?page=${page}&limit=10`
+    `https://pocketnotesappapi.vercel.app/api/groups?page=${page}&limit=10`
   );
 
   useEffect(() => {
@@ -177,13 +177,16 @@ const Sidebar = () => {
       return;
     }
 
-    const response = await fetch("http://localhost:8080/api/groups", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name: groupName, color: groupColor }),
-    });
+    const response = await fetch(
+      "https://pocketnotesappapi.vercel.app/api/groups",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: groupName, color: groupColor }),
+      }
+    );
 
     if (response.ok) {
       const newGroup = await response.json();
